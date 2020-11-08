@@ -9,7 +9,7 @@ messageDisplayed = False
 boardSize = 4  # 4 x 4 board
 endMessage = ""
 initial_set = [2, 4]
-
+all_position = [(i, j) for i in range(0, boardSize) for j in range(0, boardSize)]
 
 class Game:
 
@@ -36,10 +36,82 @@ class Game:
 
         self.board[i_2][j_2] = random.choice(initial_set)
 
+    def merge(self, col, direction):
+
+        if direction == 'up' or direction == 'left':
+            filtered_col = [i for i in col if i != 0]
+        else:
+            filtered_col = [i for i in col if i != 0][::-1]
+
+        for i in range(0, len(filtered_col)):
+            if i < len(filtered_col) - 1:
+                if filtered_col[i] == filtered_col[i + 1]:
+                    filtered_col[i] = filtered_col[i] + filtered_col[i + 1]
+                    filtered_col[i + 1] = 0
+
+        filtered_col = [i for i in filtered_col if i != 0]
+
+        while len(filtered_col) != 4:
+            filtered_col.append(0)
+
+        if direction == 'up' or direction == 'left':
+            return filtered_col
+        else:
+            return filtered_col[::-1]
+
+    def create_random_number(self):
+        # create a random number
+        # check already occupied ndarray position
+        occupied_array = list(zip(*np.nonzero(self.board)))
+        array_to_place = [array for array in all_position if array not in occupied_array]
+        i, j = random.choice(array_to_place)
+        self.board[i][j] = random.choice(initial_set)
+
     def up_move(self):
-        pass
+
+        for j in range(0, boardSize):
+            temp_col = [self.board[i][j] for i in range(0, boardSize)]
+            col = self.merge(temp_col, 'up')
+            if col != temp_col:
+                for i in range(0, boardSize):
+                    self.board[i][j] = col[i]
+
+        self.create_random_number()
+
 
     def down_move(self):
+        if self.number_moveable():
+            # merge same numbers --> move another numbers(if not mergeable)
+            # --> create random numbers
+            for j in range(0, boardSize):
+                temp_col = [self.board[i][j] for i in range(0, boardSize)]
+
+
+
+            for i in range(0, boardSize):
+                for j in range(0, boardSize):
+
+                    temp_value = self.board[i][j]
+
+                    if i != 0 and self.board[i][j] != 0:
+                        if self.board[i-1][j] == self.board[i][j]:
+                            self.board[i-1][j] = self.board[i-1][j] + self.board[i][j]
+                            self.board[i][j] = 0
+                            for temp_i in range(i-1, 0, -1):
+                                if self.board[temp_i][j] == 0:
+                                    self.board[temp_i][j] = self.board[i-1][j]
+                        else:
+                            for temp_i in range(i, 0, -1):
+                                if self.board[temp_i-1][j] == 0:
+                                    self.board[temp_i-1][j] = temp_value
+                                    self.board[temp_i][j] = 0
+
+        # create a random number
+        # check already occupied ndarray position
+        occupied_array = list(zip(*np.nonzero(self.board)))
+        array_to_place = [array for array in all_position if array not in occupied_array]
+        i, j = random.choice(array_to_place)
+        self.board[i][j] = random.choice(initial_set)
         pass
 
     def left_move(self):
@@ -48,62 +120,39 @@ class Game:
     def right_move(self):
         pass
 
-    def handle_keypress(self):
+    def handle_keypress(self, input):
+        if input == 'w':
+            self.up_move()
+        elif input == 'a':
+            self.left_move()
+        elif input == 's':
+            self.down_move()
+        elif input == 'd':
+            self.right_move()
+        else:
+            print("you can only do w/a/s/d")
+            return
+
+
+    def handle_losegame(self):
+        print('sorry you lose the game, please try again')
+        print('the highest score is {}'.format(np.max(self.board)))
 
 
     def number_moveable(self) -> bool:
-
-        # there are two situations, we can
         if np.count_nonzero(self.board) == boardSize * boardSize:
-
+            counter = 0
             for i in range(0, boardSize):
-                for j in range(0, boardSize):
-                    if i == 0:
-                        if j == 0:
-                            if self.board[i][j] != self.board[i][j + 1] and self.board[i][j] != self.board[i + 1][j]:
-                                logging.debug('game board ist not moveable, you lose the game')
-                                return False
-                        elif j == boardSize - 1:
-                            if self.board[i][j] != self.board[i][j - 1] and self.board[i][j] != self.board[i + 1][j]:
-                                logging.debug('game board ist not moveable, you lose the game')
-                                return False
-                        elif self.board[i][j] != self.board[i][j - 1] and self.board[i][j] != self.board[i][j + 1] and \
-                                self.board[i][j] != self.board[i + 1][j]:
-                            logging.debug('game board ist not moveable, you lose the game')
-                            return False
-                    elif i == boardSize -1 :
-                        if j == 0:
-                            if self.board[i][j] != self.board[i - 1][j] and self.board[i][j] != self.board[i][j + 1]:
-                                logging.debug('game board ist not moveable, you lose the game')
-                                return False
+                temp_row = self.board[i, :]
+                temp_col = self.board[:, i]
 
-                        elif j == boardSize - 1:
-                            if self.board[i][j] != self.board[i][j - 1] and self.board[i][j] != self.board[i - 1][j]:
-                                logging.debug('game board ist not moveable, you lose the game')
-                                return False
+                if 0 not in np.diff(temp_row) and 0 not in np.diff(temp_col):
+                    counter+=1
+            if counter == boardSize:
+                return False
+            else:
+                return True
 
-                        elif self.board[i][j] != self.board[i][j - 1] and self.board[i][j] != self.board[i - 1][j] and \
-                                self.board[i][j] != self.board[i][j + 1]:
-                            logging.debug('game board ist not moveable, you lose the game')
-                            return False
-
-                    elif j == 0:
-                        if self.board[i][j] != self.board[i - 1][j] and self.board[i][j] != self.board[j][j + 1] and \
-                                self.board[i][j] != self.board[i + 1][j]:
-                            logging.debug('game board ist not moveable, you lose the game')
-                            return False
-
-                    elif j == boardSize - 1:
-                        if self.board[i][j] != self.board[i-1][j] and self.board[i][j] != self.board[j][j - 1] and \
-                                self.board[i][j] != self.board[i + 1][j]:
-                            logging.debug('game board ist not moveable, you lose the game')
-                            return False
-
-                    else:
-                        return True
-
-        else:
-            return True
 
     def lose_game(self) -> bool:
 
@@ -112,6 +161,13 @@ class Game:
     def start_game(self):
         self.init_gameboard()
         self.print_board()
+        while True:
+            input_key = input()
+            self.handle_keypress(input_key)
+            self.print_board()
+            if not self.number_moveable() and self.number_moveable() != None:
+                self.handle_losegame()
+                break
 
         pass
 
