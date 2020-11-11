@@ -68,6 +68,7 @@ class Game:
         self.board[i][j] = random.choice(initial_set)
 
     def up_move(self):
+        temp_board = self.board.copy()
 
         for j in range(0, boardSize):
             temp_col = [self.board[i][j] for i in range(0, boardSize)]
@@ -76,48 +77,47 @@ class Game:
                 for i in range(0, boardSize):
                     self.board[i][j] = col[i]
 
-        self.create_random_number()
+        if not (temp_board == self.board).all():
+            self.create_random_number()
 
 
     def down_move(self):
-        if self.number_moveable():
-            # merge same numbers --> move another numbers(if not mergeable)
-            # --> create random numbers
-            for j in range(0, boardSize):
-                temp_col = [self.board[i][j] for i in range(0, boardSize)]
+        temp_board = self.board.copy()
+        for j in range(0, boardSize):
+            temp_col = [self.board[i][j] for i in range(0, boardSize)]
+            col = self.merge(temp_col, 'down')
+            if col != temp_col:
+                for i in range(0, boardSize):
+                    self.board[i][j] = col[i]
 
-
-
-            for i in range(0, boardSize):
-                for j in range(0, boardSize):
-
-                    temp_value = self.board[i][j]
-
-                    if i != 0 and self.board[i][j] != 0:
-                        if self.board[i-1][j] == self.board[i][j]:
-                            self.board[i-1][j] = self.board[i-1][j] + self.board[i][j]
-                            self.board[i][j] = 0
-                            for temp_i in range(i-1, 0, -1):
-                                if self.board[temp_i][j] == 0:
-                                    self.board[temp_i][j] = self.board[i-1][j]
-                        else:
-                            for temp_i in range(i, 0, -1):
-                                if self.board[temp_i-1][j] == 0:
-                                    self.board[temp_i-1][j] = temp_value
-                                    self.board[temp_i][j] = 0
-
-        # create a random number
-        # check already occupied ndarray position
-        occupied_array = list(zip(*np.nonzero(self.board)))
-        array_to_place = [array for array in all_position if array not in occupied_array]
-        i, j = random.choice(array_to_place)
-        self.board[i][j] = random.choice(initial_set)
+        if not (temp_board == self.board).all():
+            self.create_random_number()
         pass
 
     def left_move(self):
+        temp_board = self.board.copy()
+        for i in range(0, boardSize):
+            temp_col = [self.board[i][j] for j in range(0, boardSize)]
+            col = self.merge(temp_col, 'left')
+            if col != temp_col:
+                for j in range(0, boardSize):
+                    self.board[i][j] = col[j]
+
+        if not (temp_board == self.board).all():
+            self.create_random_number()
         pass
 
     def right_move(self):
+        temp_board = self.board.copy()
+        for i in range(0, boardSize):
+            temp_col = [self.board[i][j] for j in range(0, boardSize)]
+            col = self.merge(temp_col, 'right')
+            if col != temp_col:
+                for j in range(0, boardSize):
+                    self.board[i][j] = col[j]
+
+        if not (temp_board == self.board).all():
+            self.create_random_number()
         pass
 
     def handle_keypress(self, input):
